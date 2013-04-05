@@ -71,14 +71,19 @@ public class GitHubTriggerProcessor implements TriggerProcessor {
         }
     }
 
+    private static Pattern maybeQuoted = Pattern.compile("^\"?(\\{.*\\})\"?$");
+
     private JSONObject extractJsonFromPayload(String payload) {
         JSONObject repository = null;
         JSONObject json = JSONObject.fromObject(payload);
         if(json.has("Type")) {
             String msg = json.getString("Message");
             if(msg != null) {
-                msg = msg.substring(1,msg.length()-1); //remove the leading and trailing double quotes
-                return JSONObject.fromObject(msg);
+                Matcher m = maybeQuoted.matcher(msg);
+                if (m.matches()) {
+                    // remove the leading and trailing double quotes
+                    return JSONObject.fromObject(m.group(1));
+                }
             }
         } else if (json.has("repository")){
             return json;
